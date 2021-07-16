@@ -3,11 +3,11 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: Hexo
-subtitle: ''
-description: ''
-keywords:
-author: John Doe
+title: 云淡风间
+subtitle: '技术博客'
+description: '分享后端，前端，分布式，微服务等知识和杂谈'
+keywords: Java, Go, 分布式, 微服务, 日语
+author: ZHIWEI XU
 language: en
 timezone: ''
 
