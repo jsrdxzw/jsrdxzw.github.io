@@ -8,8 +8,8 @@ subtitle: '技术博客'
 description: '分享后端，前端，分布式，微服务等知识和杂谈'
 keywords: Java, Go, 分布式, 微服务, 日语
 author: ZHIWEI XU
-language: en
-timezone: ''
+language: zh-CN
+timezone: 'Asia/Shanghai'
 
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
@@ -97,7 +97,7 @@ ignore:
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: material
+theme: fluid
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
