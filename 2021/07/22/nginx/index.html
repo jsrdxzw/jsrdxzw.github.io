@@ -195,7 +195,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      18
+      19
        分钟
     </span>
   
@@ -280,7 +280,12 @@
 <li>监控worker进程的运行状态，当worker进程异常退出后Master进程会自动重新启动新的worker进程</li>
 </ul>
 </li>
-<li>worker进程worker进程具体处理网络请求。多个worker进程之间是对等的，他们同等竞争来自客户端的请求，各进程互相之间是独立的。<br>nginx使用互斥锁来保证只有一个workder进程能够处理请求</li>
+<li>worker进程worker进程具体处理网络请求。多个worker进程之间是对等的，他们同等竞争来自客户端的请求，各进程互相之间是独立的。<br>nginx使用互斥锁来保证只有一个worker进程能够处理请求</li>
+</ul>
+<p>多进程机制的好处：</p>
+<ul>
+<li>一个进程挂了，其他进程可以照样提供服务</li>
+<li>为热部署提供支撑，主要就是reload配置文件的时候，不会影响到旧请求的处理</li>
 </ul>
 <h4 id="nginx信号处理"><a href="#nginx信号处理" class="headerlink" title="nginx信号处理"></a>nginx信号处理</h4><p>以 <code>./nginx -s reload</code> 来说明nginx信号处理这部分 </p>
 <ol>
