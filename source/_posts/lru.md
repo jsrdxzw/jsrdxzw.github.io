@@ -1,7 +1,13 @@
 ---
 title: LRU算法
 date: 2021-07-23 17:15:50
-tags: 算法
+excerpt: LRU算法实现
+categories:
+- 算法
+tags:
+- 算法
+- 面试
+- LRU
 ---
 
 LRU缓存机制即最少最近使用原则（`Least Recently Used`的缩写），常见于Redis等内存淘汰机制。也是面试的常考题
