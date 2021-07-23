@@ -7,6 +7,8 @@ categories:
 tags: nginx
 ---
 
+Nginx是一个高并发，低内存占用的web服务器，单机可以达到5wQPS以上，并且内存占用非常低
+
 ### nginx常用命令
 
 + nginx主要命令
