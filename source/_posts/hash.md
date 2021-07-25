@@ -5,8 +5,7 @@ excerpt: 一致性Hash算法原理和实现
 tags:
 - 分布式
 - 一致性Hash
-categories:
-- 分布式
+categories: 后端
 ---
 
 ### Hash算法使用场景
