@@ -14,11 +14,11 @@
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
   <meta name="theme-color" content="#2f4154">
-  <meta name="description" content="LRU算法实现">
+  <meta name="description" content="介绍全局分布式id的主要原理和实现">
   <meta name="author" content="ZHIWEI XU">
   <meta name="keywords" content="Java, Go, 分布式, 微服务, 日语">
   
-  <title>LRU算法 - 云淡风间</title>
+  <title>分布式id - 云淡风间</title>
 
   <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
 
@@ -163,7 +163,7 @@
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
           <div class="page-header text-center fade-in-up">
-            <span class="h2" id="subtitle" title="LRU算法">
+            <span class="h2" id="subtitle" title="分布式id">
               
             </span>
 
@@ -173,8 +173,8 @@
   
     <span class="post-meta">
       <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-      <time datetime="2021-07-23 17:15" pubdate>
-        2021年7月23日 下午
+      <time datetime="2021-07-25 13:49" pubdate>
+        2021年7月25日 下午
       </time>
     </span>
   
@@ -185,7 +185,7 @@
     
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      333 字
+      719 字
     </span>
   
 
@@ -195,7 +195,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      5
+      9
        分钟
     </span>
   
@@ -233,12 +233,35 @@
         <div class="py-5" id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">LRU算法</h1>
+            <h1 style="display: none">分布式id</h1>
             
             <div class="markdown-body">
-              <p>LRU缓存机制即最少最近使用原则（<code>Least Recently Used</code>的缩写），常见于Redis等内存淘汰机制。也是面试的常考题<br>具体的实现方式是，使用<code>Map + Node</code>双向链表实现，Map可以快速定位Node节点，双向链表方便插入和删除。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">LRUCache</span> </span>&#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> capacity;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> size;<br>    <span class="hljs-keyword">private</span> Node head;<br>    <span class="hljs-keyword">private</span> Node tail;<br>    <span class="hljs-keyword">private</span> Map&lt;Integer, Node&gt; map;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Node</span> </span>&#123;<br>        <span class="hljs-keyword">private</span> Node prev;<br>        <span class="hljs-keyword">private</span> Node next;<br>        <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> key;<br>        <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> value;<br>        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-title">Node</span><span class="hljs-params">()</span> </span>&#123;<br><br>        &#125;<br><br>        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-title">Node</span><span class="hljs-params">(<span class="hljs-keyword">int</span> key, <span class="hljs-keyword">int</span> value)</span> </span>&#123;<br>            <span class="hljs-keyword">this</span>.key = key;<br>            <span class="hljs-keyword">this</span>.value = value;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-title">LRUCache</span><span class="hljs-params">(<span class="hljs-keyword">int</span> capacity)</span> </span>&#123;<br>        <span class="hljs-keyword">this</span>.head = <span class="hljs-keyword">new</span> Node();<br>        <span class="hljs-keyword">this</span>.tail = <span class="hljs-keyword">new</span> Node();<br>        head.next = tail;<br>        tail.prev = head;<br>        <span class="hljs-keyword">this</span>.capacity = capacity;<br>        <span class="hljs-keyword">this</span>.size = <span class="hljs-number">0</span>;<br>        map = <span class="hljs-keyword">new</span> HashMap&lt;&gt;();<br>    &#125;<br>    <br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">int</span> <span class="hljs-title">get</span><span class="hljs-params">(<span class="hljs-keyword">int</span> key)</span> </span>&#123;<br>        <span class="hljs-keyword">if</span> (!map.containsKey(key)) &#123;<br>            <span class="hljs-keyword">return</span> -<span class="hljs-number">1</span>;<br>        &#125;<br>        Node node = map.get(key);<br>        removeNode(node);<br>        moveHead(node);<br>        <span class="hljs-keyword">return</span> node.value;<br>    &#125;<br>    <br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">put</span><span class="hljs-params">(<span class="hljs-keyword">int</span> key, <span class="hljs-keyword">int</span> value)</span> </span>&#123;<br>        Node node = map.get(key);<br>        <span class="hljs-keyword">if</span> (node == <span class="hljs-keyword">null</span>) &#123;<br>            <span class="hljs-comment">// 缓存里没有，则需要插入新的节点</span><br>            size++;<br>            <span class="hljs-keyword">if</span> (size &gt; capacity) &#123;<br>                <span class="hljs-comment">// 容量已经满了，则需要删除尾节点，并插入新节点</span><br>                Node t = tail.prev;<br>                <span class="hljs-comment">// 删除node</span><br>                map.remove(t.key);<br>                removeNode(t);<br>                size--;<br>            &#125;<br>            node = <span class="hljs-keyword">new</span> Node(key, value);<br>            map.put(key, node);<br>            moveHead(node);<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            node.value = value;<br>            removeNode(node);<br>            moveHead(node);<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">removeNode</span><span class="hljs-params">(Node node)</span> </span>&#123;<br>        node.prev.next = node.next;<br>        node.next.prev = node.prev;<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">moveHead</span><span class="hljs-params">(Node node)</span> </span>&#123;<br>        <span class="hljs-comment">// 移动节点到头部</span><br>        node.next = head.next;<br>        head.next.prev = node;<br>        head.next = node;<br>        node.prev = head;<br>    &#125;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+              <p>在数据库集群模式中，往往不能使用自增id，这时候可以在业务端生成全局唯一id。主要的方法有三种</p>
+<h3 id="UUID"><a href="#UUID" class="headerlink" title="UUID"></a>UUID</h3><p>直接使用jdk提供的UUID，优点是简单，缺点是非自增，无规律</p>
+<h3 id="snowflake算法"><a href="#snowflake算法" class="headerlink" title="snowflake算法"></a>snowflake算法</h3><hr>
+<p><img src="/img/snowflake.png" srcset="/img/loading.gif" lazyload alt="雪花算法"></p>
+<p>雪花算法主要结构如下</p>
+<ul>
+<li>1 位，不用。二进制中最高位为 1 的都是负数，但是我们生成的 id 一般都使用整数，所以这个最高位固定是<code>0</code></li>
+<li>41 位，用来记录时间戳（毫秒）, 理论上可以支持69年左右</li>
+<li>10 位，用来记录集群id和工作机器id<ul>
+<li>可以部署在 <code>2^10 = 1024</code> 个节点，包括 5 位 datacenterId 和 5 位 workerId</li>
+</ul>
+</li>
+<li>12 位序列号，用来记录同毫秒内产生的不同 id, 一毫秒同一个机器可以产生4096个id</li>
+</ul>
+<p>SnowFlake 可以保证：</p>
+<p>同一台服务器所有生成的 id 按时间趋势递增</p>
+<p>整个分布式系统内不会产生重复 id（因为有 datacenterId 和 workerId 来做区分）</p>
+<p><code>依赖机器时钟，需要做时钟同步</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ntpdate -u ntp.api.bz<br></code></pre></td></tr></table></figure>
+<p>主要的算法实现</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">synchronized</span> <span class="hljs-keyword">long</span> <span class="hljs-title">nextId</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-keyword">long</span> timestamp = timeGen();<br>    <span class="hljs-comment">// 获取当前时间戳如果小于上次时间戳，则表示时间戳获取出现异常</span><br>    <span class="hljs-keyword">if</span> (timestamp &lt; lastTimestamp) &#123;<br>        System.err.printf(<span class="hljs-string">&quot;clock is moving backwards.  Rejecting requests until %d.&quot;</span>, lastTimestamp);<br>        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> RuntimeException(String.format(<span class="hljs-string">&quot;Clock moved backwards.  Refusing to generate id for %d milliseconds&quot;</span>,<br>                lastTimestamp - timestamp));<br>    &#125;<br>    <span class="hljs-comment">// 获取当前时间戳如果等于上次时间戳</span><br>    <span class="hljs-comment">// 说明：还处在同一毫秒内，则在序列号加1；否则序列号赋值为0，从0开始。</span><br>    <span class="hljs-keyword">if</span> (lastTimestamp == timestamp) &#123;<br>        sequence = (sequence + <span class="hljs-number">1</span>) &amp; sequenceMask;<br>        <span class="hljs-comment">// sequence=0表示已经打到了4096，超过了边界，此时需要等待直到下一毫秒</span><br>        <span class="hljs-keyword">if</span> (sequence == <span class="hljs-number">0</span>) &#123;<br>            timestamp = tilNextMillis(lastTimestamp);<br>        &#125;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        sequence = <span class="hljs-number">0</span>;<br>    &#125;<br>    <span class="hljs-comment">//将上次时间戳值刷新</span><br>    lastTimestamp = timestamp;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * 返回结果：</span><br><span class="hljs-comment">     * (timestamp - twepoch) &lt;&lt; timestampLeftShift) 表示将时间戳减去初始时间戳，再左移相应位数</span><br><span class="hljs-comment">     * (datacenterId &lt;&lt; datacenterIdShift) 表示将数据id左移相应位数</span><br><span class="hljs-comment">     * (workerId &lt;&lt; workerIdShift) 表示将工作id左移相应位数</span><br><span class="hljs-comment">     * | 是按位或运算符，例如：x | y，只有当x，y都为0的时候结果才为0，其它情况结果都为1。</span><br><span class="hljs-comment">     * 因为个部分只有相应位上的值有意义，其它位上都是0，所以将各部分的值进行 | 运算就能得到最终拼接好的id</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">return</span> ((timestamp - twepoch) &lt;&lt; timestampLeftShift) |<br>            (datacenterId &lt;&lt; datacenterIdShift) |<br>            (workerId &lt;&lt; workerIdShift) |<br>            sequence;<br>&#125;<br></code></pre></td></tr></table></figure>
 
+<p>具体的源码可以参考这里 <a target="_blank" rel="noopener" href="https://github.com/jsrdxzw/improve-java/blob/master/id_worker/src/main/java/globalid/IdWorker.java">雪花算法源码</a></p>
+<h3 id="借助Redis的Incr命令获取全局唯⼀ID"><a href="#借助Redis的Incr命令获取全局唯⼀ID" class="headerlink" title="借助Redis的Incr命令获取全局唯⼀ID"></a>借助Redis的Incr命令获取全局唯⼀ID</h3><hr>
+<p>Redis可以保证原子性提供全局id，也是一个推荐的做法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs java">Jedis jedis = <span class="hljs-keyword">new</span> Jedis(<span class="hljs-string">&quot;127.0.0.1&quot;</span>, <span class="hljs-number">6379</span>);<br>    <span class="hljs-keyword">try</span> &#123;<br>        <span class="hljs-keyword">long</span> id = jedis.incr(<span class="hljs-string">&quot;id&quot;</span>);<br>        System.out.println(<span class="hljs-string">&quot;从redis中获取的分布式id为：&quot;</span> + id);<br>    &#125; <span class="hljs-keyword">finally</span> &#123;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">null</span> != jedis) &#123;<br>            jedis.close();<br>        &#125; <br>    &#125;<br></code></pre></td></tr></table></figure>
             </div>
             <hr>
             <div>
@@ -247,7 +270,7 @@
                   <div class="post-meta mr-3">
                     <i class="iconfont icon-category"></i>
                     
-                      <a class="hover-with-bg" href="/categories/%E7%AE%97%E6%B3%95/">算法</a>
+                      <a class="hover-with-bg" href="/categories/%E5%90%8E%E7%AB%AF/">后端</a>
                     
                   </div>
                 
@@ -255,11 +278,7 @@
                   <div class="post-meta">
                     <i class="iconfont icon-tags"></i>
                     
-                      <a class="hover-with-bg" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
-                    
-                      <a class="hover-with-bg" href="/tags/%E9%9D%A2%E8%AF%95/">面试</a>
-                    
-                      <a class="hover-with-bg" href="/tags/LRU/">LRU</a>
+                      <a class="hover-with-bg" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
                     
                   </div>
                 
@@ -276,18 +295,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2021/07/25/global-id/">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">分布式id</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2021/07/23/hash/">
-                        <span class="hidden-mobile">一致性Hash算法</span>
+                      <a href="/2021/07/23/lru/">
+                        <span class="hidden-mobile">LRU算法</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -309,8 +322,8 @@
     
       <script type="text/javascript">
         var disqus_config = function() {
-          this.page.url = 'https://jsrdxzw.github.io/2021/07/23/lru/';
-          this.page.identifier = '/2021/07/23/lru/';
+          this.page.url = 'https://jsrdxzw.github.io/2021/07/25/global-id/';
+          this.page.identifier = '/2021/07/25/global-id/';
         };
         Fluid.utils.loadComments('#disqus_thread', function() {
           var d = document, s = d.createElement('script');
