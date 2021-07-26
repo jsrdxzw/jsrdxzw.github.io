@@ -14,11 +14,11 @@
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
   <meta name="theme-color" content="#2f4154">
-  <meta name="description" content="介绍全局分布式id的主要原理和实现">
+  <meta name="description" content="session在分布式环境下的一致性问题和解决方案">
   <meta name="author" content="ZHIWEI XU">
   <meta name="keywords" content="Java, Go, 分布式, 微服务, 日语">
   
-  <title>分布式id - 云淡风间</title>
+  <title>session一致性 - 云淡风间</title>
 
   <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
 
@@ -163,7 +163,7 @@
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
           <div class="page-header text-center fade-in-up">
-            <span class="h2" id="subtitle" title="分布式id">
+            <span class="h2" id="subtitle" title="session一致性">
               
             </span>
 
@@ -173,8 +173,8 @@
   
     <span class="post-meta">
       <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-      <time datetime="2021-07-25 13:49" pubdate>
-        2021年7月25日 下午
+      <time datetime="2021-07-26 18:44" pubdate>
+        2021年7月26日 晚上
       </time>
     </span>
   
@@ -185,7 +185,7 @@
     
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      719 字
+      496 字
     </span>
   
 
@@ -195,7 +195,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      9
+      7
        分钟
     </span>
   
@@ -233,35 +233,45 @@
         <div class="py-5" id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">分布式id</h1>
+            <h1 style="display: none">session一致性</h1>
             
             <div class="markdown-body">
-              <p>在数据库集群模式中，往往不能使用自增id，这时候可以在业务端生成全局唯一id。主要的方法有三种</p>
-<h3 id="UUID"><a href="#UUID" class="headerlink" title="UUID"></a>UUID</h3><p>直接使用jdk提供的UUID，优点是简单，缺点是非自增，无规律</p>
-<h3 id="snowflake算法"><a href="#snowflake算法" class="headerlink" title="snowflake算法"></a>snowflake算法</h3><hr>
-<p><img src="/img/snowflake.png" srcset="/img/loading.gif" lazyload alt="雪花算法"></p>
-<p>雪花算法主要结构如下</p>
+              <h3 id="session在分布式环境下的问题"><a href="#session在分布式环境下的问题" class="headerlink" title="session在分布式环境下的问题"></a>session在分布式环境下的问题</h3><p>Session在集群情况下，可能会发生不一致的问题，即Session不能在多机器共享</p>
+<p><img src="/img/session.png" srcset="/img/loading.gif" lazyload alt="Session不一致问题"></p>
+<h3 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h3><h4 id="1-使用Nginx的ip-hash-保证同一个ip请求同一个实例"><a href="#1-使用Nginx的ip-hash-保证同一个ip请求同一个实例" class="headerlink" title="1. 使用Nginx的ip_hash 保证同一个ip请求同一个实例"></a>1. 使用Nginx的<code>ip_hash</code> 保证同一个ip请求同一个实例</h4><p>优点:</p>
 <ul>
-<li>1 位，不用。二进制中最高位为 1 的都是负数，但是我们生成的 id 一般都使用整数，所以这个最高位固定是<code>0</code></li>
-<li>41 位，用来记录时间戳（毫秒）, 理论上可以支持69年左右</li>
-<li>10 位，用来记录集群id和工作机器id<ul>
-<li>可以部署在 <code>2^10 = 1024</code> 个节点，包括 5 位 datacenterId 和 5 位 workerId</li>
+<li>配置简单，不入侵应用，不需要额外修改代码</li>
 </ul>
+<p>缺点:</p>
+<ul>
+<li>服务器重启，Session会丢失，因为Session本质上保存在服务器内存中</li>
+<li>单点负载，故障风险</li>
+</ul>
+<h4 id="2-使用Redis统一保存Session"><a href="#2-使用Redis统一保存Session" class="headerlink" title="2. 使用Redis统一保存Session"></a>2. 使用Redis统一保存Session</h4><p>优点:</p>
+<ul>
+<li>能适应各种负载均衡策略 </li>
+<li>服务器重启或者宕机不会造成Session丢失 </li>
+<li>扩展能力强</li>
+<li>适合大集群数量使用</li>
+</ul>
+<p>使用<code>Spring Session</code>可以非常方便的实现Redis管理Session</p>
+<ol>
+<li><p>引入jar包</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs xml"><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>  <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.springframework.boot<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>  <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>spring-boot-starter-data-redis<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>  <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.springframework.session<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>  <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>spring-session-data-redis<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br></code></pre></td></tr></table></figure></li>
+<li><p>配置redis</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">spring:</span><br>  <span class="hljs-attr">redis:</span><br>    <span class="hljs-attr">database:</span> <span class="hljs-number">0</span><br>    <span class="hljs-attr">host:</span> <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span><br>    <span class="hljs-attr">port:</span> <span class="hljs-number">6379</span><br></code></pre></td></tr></table></figure></li>
+<li><p>添加注解</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@EnableRedisHttpSession</span><br><span class="hljs-meta">@SpringBootApplication</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SpringApplication</span> </span>&#123;<br>    <br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>源码分析</p>
 </li>
-<li>12 位序列号，用来记录同毫秒内产生的不同 id, 一毫秒同一个机器可以产生4096个id</li>
-</ul>
-<p>SnowFlake 可以保证：</p>
-<p>同一台服务器所有生成的 id 按时间趋势递增</p>
-<p>整个分布式系统内不会产生重复 id（因为有 datacenterId 和 workerId 来做区分）</p>
-<p><code>依赖机器时钟，需要做时钟同步</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ntpdate -u ntp.api.bz<br></code></pre></td></tr></table></figure>
-<p>主要的算法实现</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">synchronized</span> <span class="hljs-keyword">long</span> <span class="hljs-title">nextId</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-keyword">long</span> timestamp = timeGen();<br>    <span class="hljs-comment">// 获取当前时间戳如果小于上次时间戳，则表示时间戳获取出现异常</span><br>    <span class="hljs-keyword">if</span> (timestamp &lt; lastTimestamp) &#123;<br>        System.err.printf(<span class="hljs-string">&quot;clock is moving backwards.  Rejecting requests until %d.&quot;</span>, lastTimestamp);<br>        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> RuntimeException(String.format(<span class="hljs-string">&quot;Clock moved backwards.  Refusing to generate id for %d milliseconds&quot;</span>,<br>                lastTimestamp - timestamp));<br>    &#125;<br>    <span class="hljs-comment">// 获取当前时间戳如果等于上次时间戳</span><br>    <span class="hljs-comment">// 说明：还处在同一毫秒内，则在序列号加1；否则序列号赋值为0，从0开始。</span><br>    <span class="hljs-keyword">if</span> (lastTimestamp == timestamp) &#123;<br>        sequence = (sequence + <span class="hljs-number">1</span>) &amp; sequenceMask;<br>        <span class="hljs-comment">// sequence=0表示已经打到了4096，超过了边界，此时需要等待直到下一毫秒</span><br>        <span class="hljs-keyword">if</span> (sequence == <span class="hljs-number">0</span>) &#123;<br>            timestamp = tilNextMillis(lastTimestamp);<br>        &#125;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        sequence = <span class="hljs-number">0</span>;<br>    &#125;<br>    <span class="hljs-comment">//将上次时间戳值刷新</span><br>    lastTimestamp = timestamp;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * 返回结果：</span><br><span class="hljs-comment">     * (timestamp - twepoch) &lt;&lt; timestampLeftShift) 表示将时间戳减去初始时间戳，再左移相应位数</span><br><span class="hljs-comment">     * (datacenterId &lt;&lt; datacenterIdShift) 表示将数据id左移相应位数</span><br><span class="hljs-comment">     * (workerId &lt;&lt; workerIdShift) 表示将工作id左移相应位数</span><br><span class="hljs-comment">     * | 是按位或运算符，例如：x | y，只有当x，y都为0的时候结果才为0，其它情况结果都为1。</span><br><span class="hljs-comment">     * 因为个部分只有相应位上的值有意义，其它位上都是0，所以将各部分的值进行 | 运算就能得到最终拼接好的id</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">return</span> ((timestamp - twepoch) &lt;&lt; timestampLeftShift) |<br>            (datacenterId &lt;&lt; datacenterIdShift) |<br>            (workerId &lt;&lt; workerIdShift) |<br>            sequence;<br>&#125;<br></code></pre></td></tr></table></figure>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 其实就是自定义了一个filter</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SessionRepositoryFilter</span>&lt;<span class="hljs-title">S</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Session</span>&gt; <span class="hljs-keyword">extends</span> <span class="hljs-title">OncePerRequestFilter</span> </span>&#123;<br>    <br>    <span class="hljs-comment">// 请求中只会调用一次</span><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-function"><span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title">doFilterInternal</span><span class="hljs-params">(HttpServletRequest request,</span></span><br><span class="hljs-params"><span class="hljs-function">                                    HttpServletResponse response, FilterChain filterChain)</span></span><br><span class="hljs-function">            <span class="hljs-keyword">throws</span> ServletException, IOException </span>&#123;<br>        request.setAttribute(SESSION_REPOSITORY_ATTR, <span class="hljs-keyword">this</span>.sessionRepository);<br><br>        SessionRepositoryRequestWrapper wrappedRequest = <span class="hljs-keyword">new</span> SessionRepositoryRequestWrapper(<br>                request, response, <span class="hljs-keyword">this</span>.servletContext);<br>        SessionRepositoryResponseWrapper wrappedResponse = <span class="hljs-keyword">new</span> SessionRepositoryResponseWrapper(<br>                wrappedRequest, response);<br><br>        <span class="hljs-keyword">try</span> &#123;<br>            filterChain.doFilter(wrappedRequest, wrappedResponse);<br>        &#125;<br>        <span class="hljs-keyword">finally</span> &#123;<br>            <span class="hljs-comment">// 这里保存到redis</span><br>            wrappedRequest.commitSession();<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
 
-<p>具体的源码可以参考这里 <a target="_blank" rel="noopener" href="https://github.com/jsrdxzw/improve-java/blob/master/id_worker/src/main/java/globalid/IdWorker.java">雪花算法源码</a></p>
-<h3 id="借助Redis的Incr命令获取全局唯⼀ID"><a href="#借助Redis的Incr命令获取全局唯⼀ID" class="headerlink" title="借助Redis的Incr命令获取全局唯⼀ID"></a>借助Redis的Incr命令获取全局唯⼀ID</h3><hr>
-<p>Redis可以保证原子性提供全局id，也是一个推荐的做法</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs java">Jedis jedis = <span class="hljs-keyword">new</span> Jedis(<span class="hljs-string">&quot;127.0.0.1&quot;</span>, <span class="hljs-number">6379</span>);<br>    <span class="hljs-keyword">try</span> &#123;<br>        <span class="hljs-keyword">long</span> id = jedis.incr(<span class="hljs-string">&quot;id&quot;</span>);<br>        System.out.println(<span class="hljs-string">&quot;从redis中获取的分布式id为：&quot;</span> + id);<br>    &#125; <span class="hljs-keyword">finally</span> &#123;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">null</span> != jedis) &#123;<br>            jedis.close();<br>        &#125; <br>    &#125;<br></code></pre></td></tr></table></figure>
+<p>关注 <code>SessionRepositoryRequestWrapper.getSession()</code> 方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 创建了一个session，但是还没有保存到Redis</span><br>S session = SessionRepositoryFilter.<span class="hljs-keyword">this</span>.sessionRepository.createSession();<br><span class="hljs-comment">// wrappedRequest.commitSession() 里面的方法</span><br><span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">commitSession</span><span class="hljs-params">()</span> </span>&#123;<br>    HttpSessionWrapper wrappedSession = getCurrentSession();<br>        <span class="hljs-keyword">if</span> (wrappedSession == <span class="hljs-keyword">null</span>) &#123;<br>            <span class="hljs-keyword">if</span> (isInvalidateClientSession()) &#123;<br>                SessionRepositoryFilter.<span class="hljs-keyword">this</span>.httpSessionIdResolver.expireSession(<span class="hljs-keyword">this</span>,<br>                <span class="hljs-keyword">this</span>.response);<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">else</span> &#123;<br>            S session = wrappedSession.getSession();<br>            clearRequestedSessionCache();<br>            <span class="hljs-comment">// 在里面保存</span><br>            SessionRepositoryFilter.<span class="hljs-keyword">this</span>.sessionRepository.save(session);<br>            String sessionId = session.getId();<br>        <span class="hljs-keyword">if</span> (!isRequestedSessionIdValid()<br>            || !sessionId.equals(getRequestedSessionId())) &#123;<br>                SessionRepositoryFilter.<span class="hljs-keyword">this</span>.httpSessionIdResolver.setSessionId(<span class="hljs-keyword">this</span>,<br>                <span class="hljs-keyword">this</span>.response, sessionId);<br>            &#125;<br>        &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 核心保存方法</span><br><span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">saveDelta</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.delta.isEmpty()) &#123;<br>        <span class="hljs-keyword">return</span>;<br>    &#125;<br>    String key = getSessionKey(getId());<br>    RedisSessionRepository.<span class="hljs-keyword">this</span>.sessionRedisOperations.opsForHash().putAll(key, <span class="hljs-keyword">new</span> HashMap&lt;&gt;(<span class="hljs-keyword">this</span>.delta));<br>    RedisSessionRepository.<span class="hljs-keyword">this</span>.sessionRedisOperations.expireAt(key,<br>            Date.from(Instant.ofEpochMilli(getLastAccessedTime().toEpochMilli())<br>                    .plusSeconds(getMaxInactiveInterval().getSeconds())));<br>    <span class="hljs-keyword">this</span>.delta.clear();<br>&#125;<br></code></pre></td></tr></table></figure>
+
             </div>
             <hr>
             <div>
@@ -270,7 +280,7 @@
                   <div class="post-meta mr-3">
                     <i class="iconfont icon-category"></i>
                     
-                      <a class="hover-with-bg" href="/categories/%E5%90%8E%E7%AB%AF/">后端</a>
+                      <a class="hover-with-bg" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
                     
                   </div>
                 
@@ -279,6 +289,8 @@
                     <i class="iconfont icon-tags"></i>
                     
                       <a class="hover-with-bg" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+                    
+                      <a class="hover-with-bg" href="/tags/session/">session</a>
                     
                   </div>
                 
@@ -295,18 +307,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2021/07/26/session/">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">session一致性</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2021/07/23/lru/">
-                        <span class="hidden-mobile">LRU算法</span>
+                      <a href="/2021/07/25/global-id/">
+                        <span class="hidden-mobile">分布式id</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -328,8 +334,8 @@
     
       <script type="text/javascript">
         var disqus_config = function() {
-          this.page.url = 'https://jsrdxzw.github.io/2021/07/25/global-id/';
-          this.page.identifier = '/2021/07/25/global-id/';
+          this.page.url = 'https://jsrdxzw.github.io/2021/07/26/session/';
+          this.page.identifier = '/2021/07/26/session/';
         };
         Fluid.utils.loadComments('#disqus_thread', function() {
           var d = document, s = d.createElement('script');
