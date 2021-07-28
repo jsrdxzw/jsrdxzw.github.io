@@ -18,7 +18,7 @@ Raft算法中任何服务器都可以扮演下面的角色之一:
 3. 跟随者(follower): 类似选民，完全被动的角色，这样的服务器等待被通知投票
 
 他们之间的身份变化如下图
-![raft算法角色变化](/img/raft-election.png.png)
+![raft算法角色变化](/img/raft-election.png)
 
 ### leader选举
 
