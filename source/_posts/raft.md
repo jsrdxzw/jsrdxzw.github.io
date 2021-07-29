@@ -53,6 +53,8 @@ leader会不断尝试给follower发log entries，直到所有节点的log entrie
 3. 跟随者响应ACK,如果 follower 宕机或者运行缓慢或者丢包，leader会不断的重试，直到所有的 follower 最终 都复制了所有的日志条目。 
 4. 通知所有的Follower提交日志，同时领导人提交这条日志到自己的状态机中，并返回给客户端。
 5. 如果committed状态后client未收到leader响应，则client会重新发送请求，需要做幂等保证一致性。
+6. 如果leader在发送commit给从节点之前挂掉，就会导致从节点存在`uncommitted log`，这时候会重新选举，
+按照raft协议，新leader会包含之前leader的最新log，并且在新的term下，**commit新的entry时**，就会一并把前leader前term的前entry也提交了，于是所有状态机就一致了
 
 ### 脑裂情况
 
