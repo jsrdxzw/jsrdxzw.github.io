@@ -185,7 +185,7 @@
     
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      645 字
+      729 字
     </span>
   
 
@@ -195,7 +195,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      6
+      7
        分钟
     </span>
   
@@ -269,6 +269,7 @@
 <li>跟随者响应ACK,如果 follower 宕机或者运行缓慢或者丢包，leader会不断的重试，直到所有的 follower 最终 都复制了所有的日志条目。 </li>
 <li>通知所有的Follower提交日志，同时领导人提交这条日志到自己的状态机中，并返回给客户端。</li>
 <li>如果committed状态后client未收到leader响应，则client会重新发送请求，需要做幂等保证一致性。</li>
+<li>如果leader在发送commit给从节点之前挂掉，就会导致从节点存在<code>uncommitted log</code>，这时候会重新选举，<br>按照raft协议，新leader会包含之前leader的最新log，并且在新的term下，<strong>commit新的entry时</strong>，就会一并把前leader前term的前entry也提交了，于是所有状态机就一致了</li>
 </ol>
 <h3 id="脑裂情况"><a href="#脑裂情况" class="headerlink" title="脑裂情况"></a>脑裂情况</h3><p>raft也可以保证在脑裂情况保证数据的一致性</p>
 <p><img src="/img/brain.png" srcset="/img/loading.gif" lazyload alt="脑裂情况图示"></p>
