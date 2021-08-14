@@ -19,6 +19,7 @@ Spring Cloud 的`eureka`利用了 Spring Boot 提供的自动装配功能
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   org.springframework.cloud.netflix.eureka.server.EurekaServerAutoConfiguration
 ```
+
 Spring启动的时候加载`EurekaServerAutoConfiguration`
 
 ```java
@@ -32,7 +33,9 @@ Spring启动的时候加载`EurekaServerAutoConfiguration`
 public class EurekaServerAutoConfiguration implements WebMvcConfigurer {
 }
 ```
+
 注入的条件是来自EurekaServerMarkerConfiguration的 Marker, 看一下这个类
+
 ```java
 @Configuration(proxyBeanMethods = false)
 public class EurekaServerMarkerConfiguration {
@@ -48,8 +51,10 @@ public class EurekaServerMarkerConfiguration {
 
 }
 ```
+
 可以发现需要EurekaServerMarkerConfiguration去初始化这个Marker，
 而EurekaServerMarkerConfiguration的初始化可以从下面的EnableEurekaServer来完成
+
 ```java
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -60,6 +65,7 @@ public @interface EnableEurekaServer {
 
 }
 ```
+
 只有添加了`@EnableEurekaServer`注解，才会有后面的动作，这是成为一个eureka server的前提
 
 ### 主要配置类和初始化
@@ -155,7 +161,9 @@ public class PeerEurekaNodes {
     }
 }
 ```
+
 `DefaultEurekaServerContext`是eureka server的默认上下文，这边就会获取其他的服务节点信息
+
 ```java
 public class DefaultEurekaServerContext {
     @PostConstruct
@@ -173,8 +181,10 @@ public class DefaultEurekaServerContext {
     }
 }
 ```
+
 重点看eureka的初始化过程，在eureka server启动过程中，继承了`smartLifecycle`，这样可以在Bean初始化完做一些事情，
 在syncUp方法中，会获取其他eureka server的注册信息，并保存到本地的register中，结构是 `ConcurrentHashMap<String, Map<String, Lease<InstanceInfo>>>`
+
 ```java
 public class PeerAwareInstanceRegistryImpl {
     public int syncUp() {
@@ -240,7 +250,9 @@ public class PeerAwareInstanceRegistryImpl {
 ```
 
 ### 服务注册过程
+
 1. 首先通过Jersey的接口监听注册请求
+
 ```java
 public class ApplicationResource {
     // 供客户端进行服务注册的接口
@@ -255,7 +267,9 @@ public class ApplicationResource {
     }
 }
 ```
+
 2. 调用`register`方法注册到本地缓存
+
 ```java
 public class PeerAwareInstanceRegistryImpl {
     public void register(final InstanceInfo info, final boolean isReplication) {
@@ -271,7 +285,9 @@ public class PeerAwareInstanceRegistryImpl {
     }
 }
 ```
+
 `super.register`主要是注册节点到本地缓存的逻辑
+
 ```java
 public class AbstractInstanceRegistry {
     public void register(InstanceInfo registrant, int leaseDuration, boolean isReplication) {
@@ -301,7 +317,9 @@ public class AbstractInstanceRegistry {
     }
 }
 ```
+
 3. 把该注册信息同步到其他节点
+
 ```java
 public class A {
     private void replicateToPeers(Action action, String appName, String id,
@@ -368,7 +386,9 @@ public class A {
     }
 }
 ```
+
 4. 心跳【续约】接口
+
 ```java
 public class InstanceResource {
     // 续约接口
@@ -402,7 +422,9 @@ client在启动的时候需要
 3. 开启定时任务发送心跳，**主动拉取**server的注册信息刷新到本地的缓存【eureka不会主动推送】
 
 ### 自动装配和注册
+
 1. 自动装配初始化配置类，读取配置文件
+
 ```java
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties
@@ -436,7 +458,9 @@ public class EurekaClientAutoConfiguration {
     }
 }
 ```
+
 2. 在DiscoveryClient的初始化中，获取server的注册信息
+
 ```java
 public class DiscoveryClient {
     @Inject
@@ -503,5 +527,108 @@ public class DiscoveryClient {
         return true;
     }
     
+}
+```
+
+在全量获取的时候，使用了jersey框架获取了applications信息，然后使用了乐观锁设置到本地缓存
+
+```java
+ private void getAndStoreFullRegistry() throws Throwable {
+    // AtomicLong 作为乐观锁
+    long currentUpdateGeneration = fetchRegistryGeneration.get();
+
+    logger.info("Getting all instance registry info from the eureka server");
+
+    Applications apps = null;
+    EurekaHttpResponse<Applications> httpResponse = clientConfig.getRegistryRefreshSingleVipAddress() == null
+        // 请求服务器获取
+            ? eurekaTransport.queryClient.getApplications(remoteRegionsRef.get())
+            : eurekaTransport.queryClient.getVip(clientConfig.getRegistryRefreshSingleVipAddress(), remoteRegionsRef.get());
+    if (httpResponse.getStatusCode() == Status.OK.getStatusCode()) {
+        apps = httpResponse.getEntity();
+    }
+    logger.info("The response status is {}", httpResponse.getStatusCode());
+
+    if (apps == null) {
+        logger.error("The application is null for some reason. Not storing this information");
+    } else if (fetchRegistryGeneration.compareAndSet(currentUpdateGeneration, currentUpdateGeneration + 1)) {
+        // 洗牌随机算法设置缓存
+        localRegionApps.set(this.filterAndShuffle(apps));
+        logger.debug("Got full registry with apps hashcode {}", apps.getAppsHashCode());
+    } else {
+        logger.warn("Not updating applications as another thread is updating it already");
+    }
+}
+```
+
+3. 注册自己
+
+```java
+boolean register() throws Throwable {
+    logger.info(PREFIX + "{}: registering service...", appPathIdentifier);
+    EurekaHttpResponse<Void> httpResponse;
+    try {
+        httpResponse = eurekaTransport.registrationClient.register(instanceInfo);
+    } catch (Exception e) {
+        logger.warn(PREFIX + "{} - registration failed {}", appPathIdentifier, e.getMessage(), e);
+        throw e;
+    }
+    if (logger.isInfoEnabled()) {
+        logger.info(PREFIX + "{} - registration status: {}", appPathIdentifier, httpResponse.getStatusCode());
+    }
+    return httpResponse.getStatusCode() == Status.NO_CONTENT.getStatusCode();
+}
+```
+
+4. 定时器获取注册信息和发送心跳
+
+回到`DiscoveryClient`的构造方法，调用完fetchRegistry方法之后会执行`initScheduledTasks`方法，作为定时器的初始化，
+定时任务基本和之前初始化获取注册信息`instance`一样
+
+```java
+void refreshRegistry() {
+    // 重新获取注册信息，和之前的
+    boolean success = fetchRegistry(remoteRegionsModified); 
+}
+
+boolean renew() {
+    EurekaHttpResponse<InstanceInfo> httpResponse;
+    try {
+        httpResponse = eurekaTransport.registrationClient.sendHeartBeat(instanceInfo.getAppName(), instanceInfo.getId(), instanceInfo, null);
+        logger.debug(PREFIX + "{} - Heartbeat status: {}", appPathIdentifier, httpResponse.getStatusCode());
+        // 找不到则被eureka service剔除
+        if (httpResponse.getStatusCode() == Status.NOT_FOUND.getStatusCode()) {
+            REREGISTER_COUNTER.increment();
+            logger.info(PREFIX + "{} - Re-registering apps/{}", appPathIdentifier, instanceInfo.getAppName());
+            long timestamp = instanceInfo.setIsDirtyWithTime();
+            // 重新注册自己
+            boolean success = register();
+            if (success) {
+                instanceInfo.unsetIsDirty(timestamp);
+            }
+            return success;
+        }
+        return httpResponse.getStatusCode() == Status.OK.getStatusCode();
+    } catch (Throwable e) {
+        logger.error(PREFIX + "{} - was unable to send heartbeat!", appPathIdentifier, e);
+        return false;
+    }
+}
+```
+
+5. 服务主动下线会调用清理定时任务和server下架操作
+
+```java
+void unregister() {
+    // It can be null if shouldRegisterWithEureka == false
+    if(eurekaTransport != null && eurekaTransport.registrationClient != null) {
+        try {
+            logger.info("Unregistering ...");
+            EurekaHttpResponse<Void> httpResponse = eurekaTransport.registrationClient.cancel(instanceInfo.getAppName(), instanceInfo.getId());
+            logger.info(PREFIX + "{} - deregister  status: {}", appPathIdentifier, httpResponse.getStatusCode());
+        } catch (Exception e) {
+            logger.error(PREFIX + "{} - de-registration failed{}", appPathIdentifier, e.getMessage(), e);
+        }
+    }
 }
 ```
