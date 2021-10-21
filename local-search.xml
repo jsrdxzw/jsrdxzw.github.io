@@ -4,6 +4,33 @@
   
   
   <entry>
+    <title>go入门和避坑指南</title>
+    <link href="/2021/10/21/go-learn/"/>
+    <url>/2021/10/21/go-learn/</url>
+    
+    <content type="html"><![CDATA[<h3 id="Go的基础语法"><a href="#Go的基础语法" class="headerlink" title="Go的基础语法"></a>Go的基础语法</h3>]]></content>
+    
+    
+    <categories>
+      
+      <category>后端</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Go</tag>
+      
+      <tag>后端</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>eureka源码分析</title>
     <link href="/2021/08/13/eureka/"/>
     <url>/2021/08/13/eureka/</url>
