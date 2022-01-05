@@ -14,11 +14,11 @@
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
   <meta name="theme-color" content="#2f4154">
-  <meta name="description" content="分享后端，前端，分布式，微服务等知识和杂谈">
+  <meta name="description" content="I/O 多路复用，select / poll / epoll">
   <meta name="author" content="ZHIWEI XU">
   <meta name="keywords" content="Java, Go, 分布式, 微服务, 日语">
   
-  <title>go入门和避坑指南 - 云淡风间</title>
+  <title>I/O 多路复用 - 云淡风间</title>
 
   <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
 
@@ -163,7 +163,7 @@
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
           <div class="page-header text-center fade-in-up">
-            <span class="h2" id="subtitle" title="go入门和避坑指南">
+            <span class="h2" id="subtitle" title="I/O 多路复用">
               
             </span>
 
@@ -173,8 +173,8 @@
   
     <span class="post-meta">
       <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-      <time datetime="2021-10-21 22:30" pubdate>
-        2021年10月21日 晚上
+      <time datetime="2022-01-05 17:19" pubdate>
+        2022年1月5日 下午
       </time>
     </span>
   
@@ -185,7 +185,7 @@
     
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      6 字
+      1.5k 字
     </span>
   
 
@@ -195,7 +195,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1
+      16
        分钟
     </span>
   
@@ -233,10 +233,71 @@
         <div class="py-5" id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">go入门和避坑指南</h1>
+            <h1 style="display: none">I/O 多路复用</h1>
             
             <div class="markdown-body">
-              <h3 id="Go的基础语法"><a href="#Go的基础语法" class="headerlink" title="Go的基础语法"></a>Go的基础语法</h3>
+              <h2 id="阻塞IO"><a href="#阻塞IO" class="headerlink" title="阻塞IO"></a>阻塞IO</h2><p>阻塞 I/O，是指进程发起调用后，会被挂起（阻塞），直到收到数据再返回。<br>如果调用一直不返回，进程就会一直被挂起。因此，当使用阻塞 I/O 时，需要使用多线程来处理多个文件描述符。<br><img src="/img/epoll-1.png" srcset="/img/loading.gif" lazyload alt="阻塞IO"><br>从图中可以看出，从kernel到user操作都被阻塞住了，在Java中，<code>FileInputStream</code>, <code>FileOutputStream</code>以及对Socket的读写<br>都是基于阻塞IO模型。</p>
+<h2 id="非阻塞IO"><a href="#非阻塞IO" class="headerlink" title="非阻塞IO"></a>非阻塞IO</h2><p>非阻塞 I/O 不会将进程挂起，调用时会立即返回成功或错误，因此可以在一个线程里轮询多个文件描述符是否就绪。<br>但是非阻塞 I/O 的缺点是：每次发起系统调用，只能检查一个文件描述符是否就绪。当文件描述符很多时，系统调用的成本很高。<br><img src="/img/epoll-2.png" srcset="/img/loading.gif" lazyload alt="非阻塞IO"></p>
+<h2 id="IO多路复用"><a href="#IO多路复用" class="headerlink" title="IO多路复用"></a>IO多路复用</h2><p>I/O 多路复用，可以<code>通过一次系统调用，检查多个文件描述符的状态</code>。这是 I/O 多路复用的主要优点，<br>相比于非阻塞 I/O，在文件描述符较多的场景下，避免了频繁的用户态和内核态的切换，减少了系统调用的开销。</p>
+<blockquote>
+<p>I/O 多路复用相当于将「遍历所有文件描述符、通过非阻塞 I/O 查看其是否就绪」的过程从用户线程移到了内核中，<br>由内核来负责轮询。</p>
+</blockquote>
+<p>进程可以通过 <code>select、poll、epoll</code> 发起 I/O 多路复用的系统调用，<br>这些系统调用都是同步阻塞的：如果传入的多个文件描述符中，有任何描述符就绪，则返回就绪的描述符；<br>否则如果所有文件描述符都未就绪，就阻塞调用进程，直到某个描述符就绪，或者阻塞时长超过设置的 timeout 后再返回。<br>I/O 多路复用内部使用非阻塞 I/O 检查每个描述符的就绪状态。<br><img src="/img/epoll-3.png" srcset="/img/loading.gif" lazyload alt="IO多路复用"></p>
+<p><strong>IO多路复用和阻塞IO的区别：</strong></p>
+<ol>
+<li>I/O 多路复用引入了一些额外的操作和开销，比如要调用2次system call</li>
+<li>用户可以在一个线程内同时处理多个 I/O 请求，而阻塞IO一个线程只能处理一个请求</li>
+</ol>
+<h3 id="select"><a href="#select" class="headerlink" title="select"></a>select</h3><p>select函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">select</span><span class="hljs-params">(<span class="hljs-keyword">int</span> nfds,</span></span><br><span class="hljs-params"><span class="hljs-function">            fd_set *<span class="hljs-keyword">restrict</span> readfds,</span></span><br><span class="hljs-params"><span class="hljs-function">            fd_set *<span class="hljs-keyword">restrict</span> writefds,</span></span><br><span class="hljs-params"><span class="hljs-function">            fd_set *<span class="hljs-keyword">restrict</span> errorfds,</span></span><br><span class="hljs-params"><span class="hljs-function">            struct timeval *<span class="hljs-keyword">restrict</span> timeout)</span></span>;<br></code></pre></td></tr></table></figure>
+<p>readfds、writefds、errorfds 是三个文件描述符集合, select会分别监听并复值给这三个参数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 返回fd，一个连接对应一个fd</span><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">socket</span><span class="hljs-params">(<span class="hljs-keyword">int</span> domain, <span class="hljs-keyword">int</span> type, <span class="hljs-keyword">int</span> protocol)</span></span><br></code></pre></td></tr></table></figure>
+
+<p>socket的核心源码<br><img src="/img/epoll-4.png" srcset="/img/loading.gif" lazyload alt="socket核心源码"></p>
+<p>主要的源码解释：</p>
+<ol>
+<li>先声明一个 fd_set 类型的变量 readFDs, fd_set是文件描述符的集合</li>
+<li>调用 FD_ZERO，将 readFDs 所有位 置0</li>
+<li>调用 FD_SET，将 readFDs 感兴趣的位 置1，表示要监听这几个文件描述符</li>
+<li>将 readFDs 传给 select，调用 select</li>
+<li>select 会将 readFDs 中就绪的位 置1，未就绪的位 置0，返回就绪的文件描述符的数量</li>
+<li>当 select 返回后，调用 FD_ISSET 检测给定位是否为 1，表示对应文件描述符是否就绪<br>比如进程想监听 1、2、5 这三个文件描述符，就将 readFDs 设置为 00010011，然后调用 select。<br>如果 fd=1、fd=2 就绪，而 fd=5 未就绪，select 会将 readFDs 设置为 00000011 并返回 2。</li>
+<li>如果每个文件描述符都未就绪，select 会阻塞 timeout 时长，再返回。这期间，如果 readFDs 监听的某个文件描述符上发生可读事件，则 select 会将对应位置 1，并立即返回。</li>
+</ol>
+<p>select的缺点：</p>
+<ol>
+<li>性能开销大<ul>
+<li>调用 select 时会陷入内核，这时需要将参数中的 fd_set 从用户空间拷贝到内核空间</li>
+<li>内核需要遍历传递进来的所有 fd_set 的每一位，不管它们是否就绪</li>
+</ul>
+</li>
+<li>同时能够监听的文件描述符数量太少。受限于 sizeof(fd_set) 的大小，在编译内核时就确定了且无法更改。一般是 1024，不同的操作系统不相同</li>
+</ol>
+<h3 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h3><p>poll 和 select 几乎没有区别, 不过在内核会转为链表方式存储，没有最大数量的限制。</p>
+<h3 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h3><p>epoll 是对 select 和 poll 的改进，避免了“性能开销大”和“文件描述符数量少”两个缺点。</p>
+<p>简而言之，epoll 有以下几个特点：</p>
+<ol>
+<li>使用红黑树存储文件描述符集合</li>
+<li>使用队列存储就绪的文件描述符</li>
+<li>每个文件描述符只需在添加时传入一次；通过事件更改文件描述符状态</li>
+<li>select、poll 模型都只使用一个函数，而 epoll 模型使用三个函数：epoll_create、epoll_ctl 和 epoll_wait。</li>
+</ol>
+<p>epoll 实例内部存储：</p>
+<ul>
+<li>监听列表：所有要监听的文件描述符，使用红黑树</li>
+<li>就绪列表：所有就绪的文件描述符，使用链表</li>
+</ul>
+<p>对于“文件描述符数量少”，select 使用整型数组存储文件描述符集合，而 epoll 使用红黑树存储，数量较大。</p>
+<p>对于“性能开销大”，epoll_ctl 中为每个文件描述符指定了回调函数，并在就绪时将其加入到就绪列表，因此 epoll 不需要像 select 那样遍历检测每个文件描述符，只需要判断就绪列表是否为空即可。这样，在没有描述符就绪时，epoll 能更早地让出系统资源。</p>
+<p><strong>三者对比</strong></p>
+<ol>
+<li>select：调用开销大（需要复制集合）；集合大小有限制；需要遍历整个集合找到就绪的描述符</li>
+<li>poll：采用链表的方式存储文件描述符，没有最大存储数量的限制，其他方面和 select 没有区别</li>
+<li>epoll：调用开销小（不需要复制）；集合大小无限制；采用回调机制，不需要遍历整个集合</li>
+</ol>
+<h3 id="异步IO"><a href="#异步IO" class="headerlink" title="异步IO"></a>异步IO</h3><p><img src="/img/epoll-5.png" srcset="/img/loading.gif" lazyload alt="异步IO"></p>
+<p>异步IO就是在内核中完成操作，完成才通知到客户端</p>
+
             </div>
             <hr>
             <div>
@@ -245,7 +306,7 @@
                   <div class="post-meta mr-3">
                     <i class="iconfont icon-category"></i>
                     
-                      <a class="hover-with-bg" href="/categories/%E5%90%8E%E7%AB%AF/">后端</a>
+                      <a class="hover-with-bg" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
                     
                   </div>
                 
@@ -253,9 +314,7 @@
                   <div class="post-meta">
                     <i class="iconfont icon-tags"></i>
                     
-                      <a class="hover-with-bg" href="/tags/Go/">Go</a>
-                    
-                      <a class="hover-with-bg" href="/tags/%E5%90%8E%E7%AB%AF/">后端</a>
+                      <a class="hover-with-bg" href="/tags/I-O/">I/O</a>
                     
                   </div>
                 
@@ -272,18 +331,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2022/01/05/epoll/">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">I/O 多路复用</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2021/08/13/eureka/">
-                        <span class="hidden-mobile">eureka源码分析</span>
+                      <a href="/2021/10/21/go-learn/">
+                        <span class="hidden-mobile">go入门和避坑指南</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -305,8 +358,8 @@
     
       <script type="text/javascript">
         var disqus_config = function() {
-          this.page.url = 'https://jsrdxzw.github.io/2021/10/21/go-learn/';
-          this.page.identifier = '/2021/10/21/go-learn/';
+          this.page.url = 'https://jsrdxzw.github.io/2022/01/05/epoll/';
+          this.page.identifier = '/2022/01/05/epoll/';
         };
         Fluid.utils.loadComments('#disqus_thread', function() {
           var d = document, s = d.createElement('script');
