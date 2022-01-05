@@ -130,7 +130,7 @@
     "ansi-styles" "^4.1.0"
     "supports-color" "^7.1.0"
 
-"chokidar@^3.0.0":
+"chokidar@^3.0.0", "chokidar@^3.3.0":
   "integrity" "sha512-ekGhOnNVPgT77r4K/U3GDhu+FQ2S8TnK/s2KbIGXi0SZWuwkZ2QNyfWdZW+TVfn84DpEP7rLeCt2UI6bJ8GwbQ=="
   "resolved" "https://registry.npmjs.org/chokidar/-/chokidar-3.5.2.tgz"
   "version" "3.5.2"
@@ -556,8 +556,8 @@
     "serve-static" "^1.14.1"
 
 "hexo-theme-fluid@^1.8.11":
-  "integrity" "sha1-Rs3zcgcMx3UnMjp+70FOmOjVBhg="
-  "resolved" "https://registry.nlark.com/hexo-theme-fluid/download/hexo-theme-fluid-1.8.11.tgz"
+  "integrity" "sha512-fg5yo8TD0eaiV21e7om1IOIwkuTzZGjNPmPmxGHR4jTY0A/MU1f9cdFts5YnjcJbWsGK006SeabFbm7aE9xOqA=="
+  "resolved" "https://registry.npmjs.org/hexo-theme-fluid/-/hexo-theme-fluid-1.8.11.tgz"
   "version" "1.8.11"
 
 "hexo-theme-landscape@^0.0.3":
