@@ -185,7 +185,7 @@
     
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      6 字
+      158 字
     </span>
   
 
@@ -195,7 +195,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1
+      2
        分钟
     </span>
   
@@ -236,7 +236,13 @@
             <h1 style="display: none">go入门和避坑指南</h1>
             
             <div class="markdown-body">
-              <h3 id="Go的基础语法"><a href="#Go的基础语法" class="headerlink" title="Go的基础语法"></a>Go的基础语法</h3>
+              <h3 id="nil在接口和值类型的区别"><a href="#nil在接口和值类型的区别" class="headerlink" title="nil在接口和值类型的区别"></a>nil在接口和值类型的区别</h3><p>Go的interface底层是通过<code>(type, value)</code>来实现的，<br><code>value</code>被称为接口的动态值，它是一个任意的具体值，而该<code>type</code>则为该值的类型。对于 int 值 3， 一个接口值包含 (int, 3)。<br>只有当value和type都为nil，interface才为nil。下面举例来说明：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-keyword">var</span> a <span class="hljs-keyword">interface</span>&#123;&#125;<br>    <span class="hljs-keyword">var</span> p *<span class="hljs-keyword">int</span> = <span class="hljs-literal">nil</span><br>    a = p<br>    fmt.Println(a == <span class="hljs-literal">nil</span>)        <span class="hljs-comment">// false</span><br>    fmt.Println(a.(*<span class="hljs-keyword">int</span>) == <span class="hljs-literal">nil</span>) <span class="hljs-comment">// true</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-comment">// 永远返回err != nil</span><br>    <span class="hljs-keyword">if</span> err := returnError(); err != <span class="hljs-literal">nil</span> &#123;<br>        fmt.Println(err)<br>    &#125;<br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">returnsError</span><span class="hljs-params">()</span> <span class="hljs-title">error</span></span> &#123;<br>    <span class="hljs-keyword">var</span> p *MyError = <span class="hljs-literal">nil</span><br>    <span class="hljs-keyword">if</span> bad() &#123;<br>        p = ErrBad<br>    &#125;<br>    <span class="hljs-keyword">return</span> p <span class="hljs-comment">// Will always return a non-nil error.</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>未完待续..</p>
+
             </div>
             <hr>
             <div>

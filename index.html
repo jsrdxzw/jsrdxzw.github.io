@@ -243,7 +243,8 @@
           
             
           
-          Go的基础语法
+          nil在接口和值类型的区别Go的interface底层是通过(type, value)来实现的，value被称为接口的动态值，它是一个任意的具体值，而该type则为该值的类型。对于 int 值 3， 一个接口值包含 (int, 3)。只有当value和type都为nil，interface才为nil。下面举例来说明：
+1234567func main() &#123;    var a inter
         </a>
       </p>
 
