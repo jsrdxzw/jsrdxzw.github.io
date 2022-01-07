@@ -1,6 +1,7 @@
 ---
 title: go入门和避坑指南
 date: 2021-10-21 22:30:02
+excerpt: go知识和使用中遇到的坑
 tags:
 - Go
 - 后端
