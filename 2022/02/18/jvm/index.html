@@ -245,7 +245,7 @@
 <li>初始化 主要完成静态块执行与静态变量的赋值。这是类加载最后阶段，若被加载类的父类没有初始化，则先对父类进行初始化。</li>
 </ol>
 <p>加载流程如下图:</p>
-<p><img src="jvm-loadclass.png" srcset="/img/loading.gif" lazyload alt="类加载流程图"></p>
+<p><img src="/img/jvm-loadclass.png" srcset="/img/loading.gif" lazyload alt="类加载流程图"></p>
 <h3 id="双亲委派模型【parents-delegate】"><a href="#双亲委派模型【parents-delegate】" class="headerlink" title="双亲委派模型【parents delegate】"></a>双亲委派模型【parents delegate】</h3><p>双亲委派其实真正的翻译应该是父类委托</p>
 <p>双亲委派模型其实就是JVM在加载的过程，默认会优先委托给父加载器加载，JVM的内部内置了3个重要的 <code>ClassLoader</code></p>
 <ol>
