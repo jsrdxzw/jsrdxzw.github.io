@@ -130,7 +130,7 @@ JVM垃圾收集器选择思路：
 避免因为连续空间不够导致的频繁Full GC。
 如果不合理的使用了本地缓存一直存数据，不去进行淘汰，也会导致大量的类在老年代，导致频繁Full GC
 2. 大量反射场景 <br/>
-大量反射场景，JVM会生成很多的临时类。比如不合理使用动态代理，就会带来Metaspace满而Full GC，进一步导致OOM的问题
+大量反射场景，JVM会生成很多的临时类。比如不合理使用动态代理，就会频繁加载代理类带来Metaspace满而Full GC，进一步导致OOM的问题
 
 ### G1收集器
 1. G1默认的是复制算法，效率高，没有内存碎片，把一个Region的存活对象复制到另一个Region
@@ -138,3 +138,20 @@ JVM垃圾收集器选择思路：
 3. 刚开始默认G1新生代为5%，大概100个region，JVM会给新生代增加region，默认最多不超过60%
 4. G1还是有Eden和Survivor的概念，但是会根据XX:MaxGCPauseMills回收一部分，晋升老年代规则基本不变
 5. Region角色会动态变化，没有固定的新生代Region，老年代Region
+
+### 常用JVM参数模版
+
+```text
+-Xms4096M -Xmx4096M -Xmn3072M -Xss1M
+-XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=256M
+-XX:+UseParNewGC -XX:+UseConcMarkSweepGC
+-XX:CMSInitiatingOccupancyFraction=92
+-XX:+UseCMSCompactAtFullCollection
+-XX:CMSFullGCsBeforeCompaction=0
+XX:+CMSParallelInitialMarkEnabled
+-XX:+CMSScavengeBeforeRemark
+-XX:+PrintGCDetails
+-Xloggc:gc.log
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:+HeapDumpPath=/usr/local/app/oom
+```
