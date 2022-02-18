@@ -185,7 +185,7 @@
     
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      1.9k 字
+      2k 字
     </span>
   
 
@@ -195,7 +195,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      22
+      23
        分钟
     </span>
   
@@ -301,7 +301,7 @@
 </ol>
 <h3 id="OOM常见问题分析"><a href="#OOM常见问题分析" class="headerlink" title="OOM常见问题分析"></a>OOM常见问题分析</h3><ol>
 <li>高并发场景 <br/><br>高并发QPS一般都在几千几万，这时候会频繁的Yong GC，导致每次会有不少对象进入老年代，触发Full GC，现象就是每几分钟甚至几秒就会卡一次。<br>这时候就增大新生代内存和增大survivor内存空间，这样可以避免每次回收因为存活对象太多，survivor放不下而频繁进入老年代，此外需要注意，最好每次Full GC就整理一次内存碎片，<br>避免因为连续空间不够导致的频繁Full GC。<br>如果不合理的使用了本地缓存一直存数据，不去进行淘汰，也会导致大量的类在老年代，导致频繁Full GC</li>
-<li>大量反射场景 <br/><br>大量反射场景，JVM会生成很多的临时类。比如不合理使用动态代理，就会带来Metaspace满而Full GC，进一步导致OOM的问题</li>
+<li>大量反射场景 <br/><br>大量反射场景，JVM会生成很多的临时类。比如不合理使用动态代理，就会频繁加载代理类带来Metaspace满而Full GC，进一步导致OOM的问题</li>
 </ol>
 <h3 id="G1收集器"><a href="#G1收集器" class="headerlink" title="G1收集器"></a>G1收集器</h3><ol>
 <li>G1默认的是复制算法，效率高，没有内存碎片，把一个Region的存活对象复制到另一个Region</li>
@@ -310,6 +310,7 @@
 <li>G1还是有Eden和Survivor的概念，但是会根据XX:MaxGCPauseMills回收一部分，晋升老年代规则基本不变</li>
 <li>Region角色会动态变化，没有固定的新生代Region，老年代Region</li>
 </ol>
+<h3 id="常用JVM参数模版"><a href="#常用JVM参数模版" class="headerlink" title="常用JVM参数模版"></a>常用JVM参数模版</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs text">-Xms4096M -Xmx4096M -Xmn3072M -Xss1M<br>-XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=256M<br>-XX:+UseParNewGC -XX:+UseConcMarkSweepGC<br>-XX:CMSInitiatingOccupancyFraction=92<br>-XX:+UseCMSCompactAtFullCollection<br>-XX:CMSFullGCsBeforeCompaction=0<br>XX:+CMSParallelInitialMarkEnabled<br>-XX:+CMSScavengeBeforeRemark<br>-XX:+PrintGCDetails<br>-Xloggc:gc.log<br>-XX:+HeapDumpOnOutOfMemoryError<br>-XX:+HeapDumpPath=/usr/local/app/oom<br></code></pre></td></tr></table></figure>
 
             </div>
             <hr>
