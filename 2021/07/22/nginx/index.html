@@ -185,7 +185,7 @@
     
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      1.5k 字
+      1.6k 字
     </span>
   
 
@@ -195,7 +195,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      19
+      21
        分钟
     </span>
   
@@ -296,6 +296,15 @@
 <li>新建成功，给旧的worker进程发送关闭消息 </li>
 <li>旧的worker进程收到信号会<strong>继续服务</strong>，直到把当前进程接收到的请求处理完毕后关闭 所以reload之后worker进程pid是发生了变化的</li>
 </ol>
+<h4 id="零拷贝技术和异步io"><a href="#零拷贝技术和异步io" class="headerlink" title="零拷贝技术和异步io"></a>零拷贝技术和异步io</h4><p>传输文件的时候，要根据文件的大小来使用不同的方式：</p>
+<ol>
+<li>传输大文件的时候，使用「异步 I/O + 直接 I/O」</li>
+<li>传输小文件的时候，则使用「零拷贝技术」<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">location /video/ &#123; <br>    sendfile on; <br>    aio on; <br>    directio 1024m; <br>&#125;<br></code></pre></td></tr></table></figure>
+当文件大小大于 <code>directio</code> 值后，使用「异步 I/O + 直接 I/O」，否则使用「零拷贝技术」。</li>
+</ol>
+<p><strong>补充</strong></p>
+<p>零拷贝技术可以直接从内存缓冲区拷贝数据到socket，但是需要使用pageCache，而大文件往往会占用pageCache的内存空间，<br>限制了它的使用场景，所以大文件传输一般使用异步io+直接io的方式</p>
+<p><img src="/img/nginx-1.png" srcset="/img/loading.gif" lazyload alt="异步io模型"></p>
 
             </div>
             <hr>
