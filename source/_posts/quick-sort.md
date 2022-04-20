@@ -46,6 +46,56 @@ class Solution {
 }
 ```
 
+### 迭代方法
+本质是用一个栈存数组每次分割的左右范围，模拟递归的过程
+```java
+class Solution {
+    public int[] sortArray(int[] nums) {
+        Deque<Integer> stack = new LinkedList<>();
+        // 用栈存左右边界
+        stack.push(nums.length);
+        stack.push(0);
+        while (!stack.isEmpty()) {
+            int l = stack.pop();
+            int r = stack.pop();
+            if (l < r) {
+                int index = partition(nums, l, r);
+                // index在l右边，则分割范围是l..index
+                if (l < index) {
+                    stack.push(index);
+                    stack.push(l);
+                }
+                // index在r左边，则分割范围是index + 1 .. r
+                if (r > index) {
+                    stack.push(r);
+                    stack.push(index + 1);
+                }
+            }
+        }
+        return nums;
+    }
+
+    private int partition(int[] nums, int start, int end) {
+        int pivot = nums[start];
+        int j = start;
+        for (int i = start + 1; i < end; i++) {
+            if (nums[i] < pivot) {
+                j++;
+                swap(nums, i, j);
+            }
+        }
+        swap(nums, start, j);
+        return j;
+    }
+
+    private void swap(int[] nums, int a, int b) {
+        int tmp = nums[a];
+        nums[a] = nums[b];
+        nums[b] = tmp;
+    }
+}
+```
+
 ### 加上随机因子的快速排序
 
 为了避免出现最坏的情况O(n^2)，我们可以引入随机因子，即在每一次分治的步骤中都加上随机的**pivot**，并交换位置
